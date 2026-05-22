@@ -1,0 +1,240 @@
+package Analizador;
+
+import java_cup.runtime.*;
+import java.util.List;
+import java.util.ArrayList;
+
+/* ---- Código en la clase parser ---- */
+parser code {:
+    public final List<String> erroresSintacticos = new ArrayList<>();
+
+    @Override
+    public void report_error(String message, Object info) {
+        StringBuilder sb = new StringBuilder("Error sintáctico");
+
+        if (info instanceof Symbol) {
+            Symbol s = (Symbol) info;
+
+            if (s.left >= 0) {
+                sb.append(" (línea ")
+                  .append(s.left + 1)
+                  .append(", columna ")
+                  .append(s.right + 1)
+                  .append(")");
+            }
+        }
+
+        sb.append(": ").append(message);
+        erroresSintacticos.add(sb.toString());
+    }
+
+    @Override
+    public void report_fatal_error(String message, Object info) {
+        report_error(message, info);
+    }
+:};
+
+/* =========================================================
+   TERMINALES
+========================================================= */
+
+terminal INICIO, FIN, VAR, IMPRIMIR;
+terminal SI, SINO;
+terminal MIENTRAS, PARA;
+terminal SEGUN, CASO, DEFECTO, ROMPER;
+terminal TIPO_ENTERO, TIPO_DECIMAL, TIPO_TEXTO;
+terminal ASIGNACION;
+terminal PUNTO_Y_COMA;
+terminal DOS_PUNTOS;
+terminal PARENTESIS_IZQ, PARENTESIS_DER;
+terminal COMA;
+terminal MAS, MENOS, MULT, DIV;
+terminal String IDENTIFICADOR, CADENA;
+terminal Integer ENTERO;
+terminal Double DECIMAL;
+
+/* =========================================================
+   NO TERMINALES
+========================================================= */
+
+non terminal programa;
+non terminal lista_sentencias;
+non terminal sentencia;
+non terminal declaracion;
+non terminal llamada;
+non terminal condicion;
+non terminal bloque;
+non terminal asignacion;
+non terminal incremento;
+non terminal lista_casos;
+non terminal caso_normal;
+non terminal caso_defecto;
+non terminal tipo;
+non terminal Object expresion;
+
+
+
+precedence left MAS, MENOS;
+precedence left MULT, DIV;
+
+precedence nonassoc SINO;
+
+/* =========================================================
+   GRAMATICA
+========================================================= */
+
+programa
+    ::= INICIO lista_sentencias FIN
+    ;
+
+/* --------------------------------------------------------- */
+
+lista_sentencias
+    ::= lista_sentencias sentencia
+    | /* vacío */
+    ;
+
+/* --------------------------------------------------------- */
+
+sentencia
+    ::= declaracion
+
+    | llamada
+
+    | SI PARENTESIS_IZQ condicion PARENTESIS_DER bloque
+      %prec SINO
+    | SI PARENTESIS_IZQ condicion PARENTESIS_DER bloque SINO bloque
+    | MIENTRAS PARENTESIS_IZQ condicion PARENTESIS_DER bloque
+    | PARA PARENTESIS_IZQ asignacion PUNTO_Y_COMA condicion PUNTO_Y_COMA incremento PARENTESIS_DER bloque
+    | SEGUN PARENTESIS_IZQ expresion PARENTESIS_DER lista_casos FIN
+    ;
+
+/* --------------------------------------------------------- */
+
+declaracion
+    ::= VAR tipo IDENTIFICADOR:id
+        ASIGNACION expresion:e
+        PUNTO_Y_COMA
+        {:
+            /* Declaración registrada */
+        :}
+    ;
+
+/* --------------------------------------------------------- */
+
+tipo
+    ::= TIPO_ENTERO
+    | TIPO_DECIMAL
+    | TIPO_TEXTO
+    ;
+
+/* --------------------------------------------------------- */
+
+llamada
+    ::= IMPRIMIR
+        PARENTESIS_IZQ expresion
+        PARENTESIS_DER
+        PUNTO_Y_COMA
+    ;
+
+/* --------------------------------------------------------- */
+
+condicion
+    ::= expresion
+    ;
+
+/* --------------------------------------------------------- */
+
+bloque
+    ::= sentencia
+    ;
+
+/* --------------------------------------------------------- */
+
+asignacion
+    ::= IDENTIFICADOR
+        ASIGNACION expresion
+    ;
+
+/* --------------------------------------------------------- */
+
+incremento
+    ::= IDENTIFICADOR
+    ;
+
+/* =========================================================
+   SEGUN / CASO
+========================================================= */
+
+lista_casos
+    ::= caso_normal
+
+    | caso_defecto
+
+    | lista_casos caso_normal
+
+    | lista_casos caso_defecto
+    ;
+
+/* --------------------------------------------------------- */
+
+caso_normal
+    ::= CASO ENTERO
+        DOS_PUNTOS
+        lista_sentencias
+        ROMPER PUNTO_Y_COMA
+    ;
+
+/* --------------------------------------------------------- */
+
+caso_defecto
+    ::= DEFECTO
+        DOS_PUNTOS
+        lista_sentencias
+    ;
+
+/* =========================================================
+   EXPRESIONES
+========================================================= */
+
+expresion
+    ::= ENTERO:v
+        {:
+            RESULT = v;
+        :}
+
+    | DECIMAL:v
+        {:
+            RESULT = v;
+        :}
+
+    | CADENA:v
+        {:
+            RESULT = v;
+        :}
+
+    | IDENTIFICADOR:id
+        {:
+            RESULT = id;
+        :}
+
+    | expresion:a MAS expresion:b
+        {:
+            RESULT = a.toString() + "+" + b.toString();
+        :}
+
+    | expresion:a MENOS expresion:b
+        {:
+            RESULT = a.toString() + "-" + b.toString();
+        :}
+
+    | expresion:a MULT expresion:b
+        {:
+            RESULT = a.toString() + "*" + b.toString();
+        :}
+
+    | expresion:a DIV expresion:b
+        {:
+            RESULT = a.toString() + "/" + b.toString();
+        :}
+    ;

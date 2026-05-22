@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.mycompany</groupId>
+    <artifactId>mavenproject1</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>21</maven.compiler.release>
+        <exec.mainClass>Analizador.Main</exec.mainClass>
+    </properties>
+
+    <dependencies>
+
+        <!-- Java CUP Runtime -->
+        <dependency>
+            <groupId>com.github.vbmacher</groupId>
+            <artifactId>java-cup-runtime</artifactId>
+            <version>11b-20160615</version>
+        </dependency>
+
+        <!-- Java CUP -->
+        <dependency>
+            <groupId>com.github.vbmacher</groupId>
+            <artifactId>java-cup</artifactId>
+            <version>11b-20160615-3</version>
+        </dependency>
+
+        <!-- JasperReports -->
+        <dependency>
+            <groupId>net.sf.jasperreports</groupId>
+            <artifactId>jasperreports</artifactId>
+            <version>6.21.3</version>
+        </dependency>
+
+        <!-- SQL Server -->
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <version>13.2.0.jre11</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+
+            <!-- Compilador Java -->
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>21</release>
+                </configuration>
+            </plugin>
+
+            <!-- JFlex -->
+            <plugin>
+                <groupId>de.jflex</groupId>
+                <artifactId>jflex-maven-plugin</artifactId>
+                <version>1.9.1</version>
+
+                <executions>
+                    <execution>
+                        <id>generate-lexer</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+
+                        <configuration>
+                            <lexDefinitions>
+                                <lexDefinition>
+                                    src/main/resources/Analizador/lexer.flex
+                                </lexDefinition>
+                            </lexDefinitions>
+
+                            <outputDirectory>
+                                src/main/java
+                            </outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Java CUP -->
+            <plugin>
+                <groupId>com.github.vbmacher</groupId>
+                <artifactId>cup-maven-plugin</artifactId>
+                <version>11b-20160615-3</version>
+
+                <executions>
+                    <execution>
+                        <id>generate-parser</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+
+                        <configuration>
+
+                            <cupDefinition>
+                                src/main/resources/Analizador/parser.cup
+                            </cupDefinition>
+
+                            <outputDirectory>
+                                src/main/java
+                            </outputDirectory>
+
+                            <packageName>
+                                Analizador
+                            </packageName>
+
+                            <!-- Genera Parser.java -->
+                            <parserName>
+                                Parser
+                            </parserName>
+
+                            <!-- Genera sym.java -->
+                            <symbolsName>
+                                sym
+                            </symbolsName>
+
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Ejecutar -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+
+                <configuration>
+                    <mainClass>Analizador.Main</mainClass>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+</project>
